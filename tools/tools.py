@@ -22,15 +22,24 @@ def highlight_faces(images: List[ndarray]) -> None:
         del draw
         img.save(f'imgs/highlighted_faces_{i}.jpg')
 
-def extract_faces(images: List[ndarray]) -> None:
+def extract_faces(images: List[ndarray]) -> List[ndarray]:
+    res = []
     face_locations = get_face_locations(images)
-    cnt = 0
     for i in range(len(face_locations)):
         for (t, r, b, l) in face_locations[i]:
-            face = images[i][t:b, l:r]
-            face_img = Image.fromarray(face)
-            face_img.save(f'imgs/face_{cnt}.jpg')
-            cnt += 1
+            res.append(images[i][t:b, l:r])
+    return res
 
-def compare_faces(known_face_encd: ndarray, unknown_face_encd: ndarray) -> List[bool]:
-    return fr.compare_faces([known_face_encd], unknown_face_encd)
+def save_faces(faces: List[ndarray]) -> None:
+    cnt = 0
+    for face in faces:
+        face_img = Image.fromarray(face)
+        face_img.save(f'imgs/face_{cnt}.jpg')
+        cnt += 1
+
+def compare_faces(known_face_encds: List[ndarray], unknown_face_encd: ndarray) -> bool:
+    res = fr.compare_faces(known_face_encds, unknown_face_encd)
+    for r in res:
+        if r:
+            return True
+    return False
