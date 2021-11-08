@@ -6,10 +6,7 @@ import tools.tools as tl
 import mark_data.mark_data as md
 
 def main():
-    ppl = md.load_dataset()
-    encds = md.get_face_encds(ppl)
-    md.save_face_encds(encds)
-    print(md.load_face_encds())
+    tl.build_dataset_from_video('video/alexis.mp4', 'alexis')
 
 if __name__ == '__main__':
     main()

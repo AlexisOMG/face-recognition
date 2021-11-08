@@ -2,6 +2,8 @@ from typing import Any, List, Tuple
 from PIL import Image, ImageDraw
 import face_recognition as fr
 from numpy import ndarray
+import cv2
+import os
 
 def load_images(paths: List[str]) -> List[ndarray]:
     return [fr.load_image_file(path) for path in paths]
@@ -43,3 +45,36 @@ def compare_faces(known_face_encds: List[ndarray], unknown_face_encd: ndarray) -
         if r:
             return True
     return False
+
+def build_dataset_from_video(path: str, name: str) -> None:
+    capture = cv2.VideoCapture(path)
+    if not os.path.exists("dataset/"+name):
+        os.mkdir("dataset/"+name)
+    
+    cnt = 0
+    while True:
+        ret, frame = capture.read()
+        fps = int(capture.get(cv2.CAP_PROP_FPS)) / 10
+        multiplier = fps * 3
+        # print(fps, multiplier)
+
+        if ret:
+            frame_id = int(round(capture.get(1)))
+            # print(frame_id)
+            cv2.imshow("frame", frame)
+            k = cv2.waitKey(20)
+
+            if frame_id % multiplier == 0:
+                cv2.imwrite(f"dataset/{name}/{cnt}.jpg", frame)
+                print(f"Take a screenshot {cnt}")
+                cnt += 1
+            
+            if k == ord("q"):
+                print("Q pressed, closing the app")
+                break
+        else:
+            print("[Error] Can't get the frame...")
+            break
+
+    capture.release()
+    cv2.destroyAllWindows()
