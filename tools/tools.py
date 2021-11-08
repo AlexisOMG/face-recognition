@@ -11,8 +11,8 @@ def load_images(paths: List[str]) -> List[ndarray]:
 def get_face_locations(images: List[ndarray]) -> List[List[Tuple[int, Any, Any, int]]]:
     return [fr.face_locations(image) for image in images]
 
-def get_face_encoding(face: ndarray) -> ndarray:
-    return fr.face_encodings(face_image=face)[0]
+def get_face_encoding(face: ndarray, known_face_locations=None) -> ndarray:
+    return fr.face_encodings(face_image=face, known_face_locations=known_face_locations)[0]
 
 def highlight_faces(images: List[ndarray]) -> None:
     face_locations = get_face_locations(images)
@@ -40,11 +40,8 @@ def save_faces(faces: List[ndarray]) -> None:
         cnt += 1
 
 def compare_faces(known_face_encds: List[ndarray], unknown_face_encd: ndarray) -> bool:
-    res = fr.compare_faces(known_face_encds, unknown_face_encd)
-    for r in res:
-        if r:
-            return True
-    return False
+    return True in fr.compare_faces(known_face_encds, unknown_face_encd)
+    
 
 def build_dataset_from_video(path: str, name: str) -> None:
     capture = cv2.VideoCapture(path)
