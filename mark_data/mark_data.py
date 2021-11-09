@@ -7,14 +7,14 @@ from numpy import ndarray
 
 import tools.tools as tl
 
-PATH_TO_DATASET = 'dataset/'
-PATH_TO_CACHE = '.dataset.pickle'
+DEFAULT_PATH_TO_DATASET = 'dataset/'
+DEFAULT_PATH_TO_CACHE = '.dataset.pickle'
 
 PeopleImagePaths = Dict[str, List[str]]
 FacesEncodings = Dict[str, List[ndarray]]
 
 class FaceData:
-    def __init__(self, path_to_dataset: str = PATH_TO_DATASET, path_to_faces_cache: str = PATH_TO_CACHE) -> None:
+    def __init__(self, path_to_dataset: str = DEFAULT_PATH_TO_DATASET, path_to_faces_cache: str = DEFAULT_PATH_TO_CACHE) -> None:
         self.path_to_dataset = path_to_dataset
         if self.path_to_dataset[-1] == '/':
             self.path_to_dataset = self.path_to_dataset[:-1]
