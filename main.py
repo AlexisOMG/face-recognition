@@ -3,7 +3,7 @@ from PIL import Image, ImageDraw
 import face_recognition as fr
 from numpy import ndarray
 import tools.tools as tl
-import mark_data.mark_data as md
+from mark_data.mark_data import FaceData
 import cv2
 
 def main():
@@ -11,7 +11,9 @@ def main():
     # dt = md.load_dataset()
     # encds = md.get_face_encds(dt)
     # md.save_face_encds(encds)
-    encds = md.load_face_encds()
+    md = FaceData()
+    encds = md.load_face_encodings_from_cache()
+    md.set_faces_encodings(encds)
     video = cv2.VideoCapture(0)
 
     while True:
@@ -23,7 +25,7 @@ def main():
             encodings = fr.face_encodings(image, locations)
 
             for face_encoding, face_location in zip(encodings, locations):
-                name = md.match_face(encds, face_encoding)
+                name = md.recognize_face(face_encoding)
                 t, r, b, l = face_location
                 cv2.rectangle(image, (l, t), (r, b), (0, 255, 0), 4)
                 cv2.rectangle(image, (l, b), (r, b), (0, 255, 0), cv2.FILLED)

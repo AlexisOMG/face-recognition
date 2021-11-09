@@ -8,42 +8,76 @@ from numpy import ndarray
 import tools.tools as tl
 
 PATH_TO_DATASET = 'dataset/'
-PATH_TO_BIN = '.dataset.pickle'
+PATH_TO_CACHE = '.dataset.pickle'
 
-def load_dataset() -> Dict[str, List[str]]:
-    if not os.path.exists(PATH_TO_DATASET):
-        print("Error: No dataset directory")
-        sys.exit(-1)
+PeopleImagePaths = Dict[str, List[str]]
+FacesEncodings = Dict[str, List[ndarray]]
 
-    paths_to_people = {}
+class FaceData:
+    def __init__(self, path_to_dataset: str = PATH_TO_DATASET, path_to_faces_cache: str = PATH_TO_CACHE) -> None:
+        self.path_to_dataset = path_to_dataset
+        if self.path_to_dataset[-1] == '/':
+            self.path_to_dataset = self.path_to_dataset[:-1]
+        self.path_to_faces_cache = path_to_faces_cache
+        self.faces_encodings = {}
 
-    for name in os.listdir(PATH_TO_DATASET):
-        if len(paths_to_people) == 0 or name not in paths_to_people:
-            paths_to_people[name] = []
+    def get_path_to_dataset(self) -> str:
+        return self.path_to_dataset
 
-        paths_to_people[name] += [PATH_TO_DATASET + name + '/' + path for path in os.listdir(PATH_TO_DATASET + name)]
+    def set_path_to_dataset(self, path_to_dataset: str) -> None:
+        self.path_to_dataset = path_to_dataset
+
+    def get_path_to_faces_cache(self) -> str:
+        return self.get_path_to_faces_cache
+
+    def set_path_to_faces_cache(self, path_to_faces_cache: str) -> None:
+        self.path_to_faces_cache = path_to_faces_cache
+
+    def get_faces_encodings(self) -> FacesEncodings:
+        return self.faces_encodings
+
+    def set_faces_encodings(self, faces_encodings: FacesEncodings) -> None:
+        self.faces_encodings = faces_encodings
+
+    def read_dataset(self) -> PeopleImagePaths:
+        if not os.path.exists(self.path_to_dataset):
+            print("Error: No dataset directory")
+            sys.exit(-1)
+
+        people_image_paths = {}
+
+        for name in os.listdir(self.path_to_dataset):
+            if len(people_image_paths) == 0 or name not in people_image_paths:
+                people_image_paths[name] = []
+            
+            path_to_person_images = self.path_to_dataset + '/' + name
+            for path in os.listdir(path_to_person_images):
+                people_image_paths[name].append(path_to_person_images + '/' + path)
+
+        return people_image_paths
+
+    def get_face_encodings(self, people: PeopleImagePaths) -> FacesEncodings:
+        res = {}
+
+        for name in people:
+            person_images = tl.load_images(people[name])
+            person_face_encodings = []
+            for face in tl.extract_faces(person_images):
+                person_face_encodings.append(tl.get_face_encoding(face))
+            res[name] = person_face_encodings
+
+        return res
+
+    def save_face_encodings_to_cache(self, encds: FacesEncodings) -> None:
+        with open(self.path_to_faces_cache, 'wb') as f:
+            pickle.dump(encds, f)
     
-    return paths_to_people
+    def load_face_encodings_from_cache(self) -> FacesEncodings:
+        return pickle.loads(open(self.path_to_faces_cache, 'rb').read())
 
-def get_face_encds(people: Dict[str, List[str]]) -> Dict[str, List[ndarray]]:
-    res = {}
-
-    for name in people:
-        person_images = tl.load_images(people[name])
-        person_face_encodings = [tl.get_face_encoding(face) for face in tl.extract_faces(person_images)]
-        res[name] = person_face_encodings
-
-    return res
-
-def save_face_encds(encds: Dict[str, List[ndarray]]) -> None:
-    with open(PATH_TO_BIN, 'wb') as f:
-        pickle.dump(encds, f)
-
-def load_face_encds() -> Dict[str, List[ndarray]]:
-    return pickle.loads(open(PATH_TO_BIN, 'rb').read())
-
-def match_face(known_faces: Dict[str, List[ndarray]], face: ndarray) -> str:
-    for name in known_faces:
-        if tl.compare_faces(known_faces[name], face):
-            return name
-    return "Unknown"
+    def recognize_face(self, face: ndarray) -> str:
+        for name in self.faces_encodings:
+            if tl.compare_faces(self.faces_encodings[name], face):
+                return name
+        
+        return 'Unknown'
