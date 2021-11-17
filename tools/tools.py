@@ -5,6 +5,8 @@ from numpy import ndarray
 import cv2
 import os
 
+import numpy
+
 def load_images(paths: List[str]) -> List[ndarray]:
     return [fr.load_image_file(path) for path in paths]
 
@@ -39,8 +41,19 @@ def save_faces(faces: List[ndarray]) -> None:
         face_img.save(f'imgs/face_{cnt}.jpg')
         cnt += 1
 
+def euclidean_dist(first_face: ndarray, second_face: ndarray) -> float:
+    res = 0.0
+    f, s = first_face.tolist(), second_face.tolist()
+    for i in range(len(f)):
+        res += (f[i] - s[i])**2
+    return numpy.sqrt(res)
+
 def compare_faces(known_face_encds: List[ndarray], unknown_face_encd: ndarray) -> bool:
-    return True in fr.compare_faces(known_face_encds, unknown_face_encd)
+    for face_encd in known_face_encds:
+        if euclidean_dist(face_encd, unknown_face_encd) <= 0.6:
+            return True
+
+    return False
     
 
 def build_dataset_from_video(path: str, name: str) -> None:
