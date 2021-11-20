@@ -1,6 +1,8 @@
 import tensorflow as tf
+from tensorflow.keras.models import load_model
 from keras.models import Sequential
 from keras import Model, layers, backend
+from keras.applications import vgg16
 import os
 
 class Network(Model):
@@ -27,47 +29,54 @@ class Network(Model):
         return tf.math.l2_normalize(self.vgg(inputs), axis=-1)
 
 def build_network() -> Network:
-    vgg = Sequential()
-    vgg.add(layers.Convolution2D(64, (3, 3), activation='relu', padding="SAME", input_shape=(224,224, 3)))
-    vgg.add(layers.Convolution2D(64, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.MaxPooling2D((2,2), strides=(2,2)))
+    # vgg_model = vgg16.VGG16()
+    # vgg = Model(inputs=vgg_model.input, outputs=vgg_model.get_layer("fc2").output)
+    # vgg.save('logs/model/siamese-1', save_format='tf')
+    # vgg.save_weights('vgg_face_weights.tf', save_format='tf')
+    vgg = load_model('logs/model/siamese-1')
+    t = Sequential(vgg.layers)
+    # vgg = Sequential()
+    # vgg.add(layers.Convolution2D(64, (3, 3), activation='relu', padding="SAME", input_shape=(224,224, 3)))
+    # vgg.add(layers.Convolution2D(64, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.MaxPooling2D((2,2), strides=(2,2)))
     
-    vgg.add(layers.Convolution2D(128, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.Convolution2D(128, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.MaxPooling2D((2,2), strides=(2,2)))
+    # vgg.add(layers.Convolution2D(128, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.Convolution2D(128, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.MaxPooling2D((2,2), strides=(2,2)))
     
-    vgg.add(layers.Convolution2D(256, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.Convolution2D(256, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.Convolution2D(256, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.MaxPooling2D((2,2), strides=(2,2)))
+    # vgg.add(layers.Convolution2D(256, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.Convolution2D(256, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.Convolution2D(256, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.MaxPooling2D((2,2), strides=(2,2)))
     
-    vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.MaxPooling2D((2,2), strides=(2,2)))
+    # vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.MaxPooling2D((2,2), strides=(2,2)))
     
-    vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
-    vgg.add(layers.MaxPooling2D((2,2), strides=(2,2)))
+    # vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.Convolution2D(512, (3, 3), activation='relu', padding="SAME"))
+    # vgg.add(layers.MaxPooling2D((2,2), strides=(2,2)))
 
-    vgg.add(layers.Flatten())
+    # t.add(layers.Flatten())
 
-    vgg.add(layers.Dense(4096, activation='relu'))
-    vgg.add(layers.Dropout(0.5))
-    vgg.add(layers.Dense(4096, activation='relu'))
-    vgg.add(layers.Dropout(0.5))
-    vgg.add(layers.Dense(2622, activation='softmax'))
+    # vgg.add(layers.Dense(4096, activation='relu'))
+    # vgg.add(layers.Dropout(0.5))
+    # vgg.add(layers.Dense(4096, activation='relu'))
+    # vgg.add(layers.Dropout(0.5))
+    # vgg.add(layers.Dense(2622, activation='softmax'))
     base_dir = "."
-    vgg.load_weights(os.path.join(base_dir, 'vgg_face_weights.h5'))
+    t.load_weights(os.path.join(base_dir, 'vgg_face_weights.h5'))
 
-    vgg.pop()
-    vgg.add(layers.Dense(128, use_bias=False))
 
-    for layer in vgg.layers[:-2]:
+    # vgg.pop()
+    t.add(layers.Dense(128, use_bias=False))
+
+    for layer in t.layers[:-1]:
         layer.trainable = False
 
-    network = Network(vgg=vgg)
+    network = Network(vgg=t)
 
     
     # checkpoint_path = os.path.join(base_dir, 'logs/model/siamese-1')
