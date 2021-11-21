@@ -4,6 +4,9 @@ import face_recognition as fr
 from numpy import ndarray
 import cv2
 import os
+import dlib
+from tqdm import tqdm
+import shutil
 
 import numpy
 
@@ -88,3 +91,44 @@ def build_dataset_from_video(path: str, name: str) -> None:
 
     capture.release()
     cv2.destroyAllWindows()
+
+def preproccess_data():
+    face_detector = dlib.get_frontal_face_detector()
+    dataset_path = './vgg_face_dataset/images'
+    path = './vgg_face_dataset/data'
+    list_of_images = []
+    for dirname in tqdm(os.listdir(path)):
+        image_folder_path = os.path.join(path, dirname)
+        os.mkdir(os.path.join(dataset_path, dirname))
+        for image in tqdm(os.listdir(image_folder_path), leave=True, position=1):
+            image_path = os.path.join(image_folder_path, image)
+            img = cv2.imread(image_path)
+            if img is None:
+                continue
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            faces = face_detector(gray, 0)
+            if len(faces) == 1:
+                for face in faces:
+                    t, r, b, l = max(0, face.top()), min(gray.shape[1], face.right()), min(gray.shape[0], face.bottom()), max(0, face.left())
+                    if t >= 0 and r >= 0 and b >= 0 and l >= 0:
+                        frame = gray[t:b, l:r]
+                        save_image = os.path.join(os.path.join(dataset_path, dirname), image)
+                        cv2.imwrite(save_image, frame)
+                        list_of_images.append(dirname + '/' + image)
+    with open('./vgg_face_dataset/list.txt', 'w') as f:
+        for item in list_of_images:
+            f.write("%s\n" % item)
+
+def clear_data():
+    list_of_images = []
+    dataset_path = './vgg_face_dataset/images'
+    for dirname in os.listdir(dataset_path):
+        if len(os.listdir(dataset_path+'/'+dirname)) < 3:
+            print(f'DELETING {dirname}')
+            shutil.rmtree(dataset_path+'/'+dirname)
+        else:
+            for name in os.listdir(dataset_path+'/'+dirname):
+                list_of_images.append(dirname+'/'+name)
+    with open('./vgg_face_dataset/list.txt', 'w') as f:
+        for item in list_of_images:
+            f.write("%s\n" % item)

@@ -1,8 +1,12 @@
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-from keras.models import Sequential
-from keras import Model, layers, backend
-from keras.applications import vgg16
+from tensorflow.keras.models import Sequential
+from tensorflow.keras import Model, layers, backend
+from tensorflow.keras.applications import vgg16
+from network.datagen import DataGenerator
+from datetime import datetime
+from tensorflow.keras.optimizers import Adam
+from tqdm import tqdm
 import os
 
 class Network(Model):
@@ -33,7 +37,7 @@ def build_network() -> Network:
     # vgg = Model(inputs=vgg_model.input, outputs=vgg_model.get_layer("fc2").output)
     # vgg.save('logs/model/siamese-1', save_format='tf')
     # vgg.save_weights('vgg_face_weights.h5')
-    vgg = load_model('logs/model/siamese-1')
+    vgg = load_model('logs/premodel/siamese-1')
     t = Sequential(vgg.layers)
     # vgg = Sequential()
     # vgg.add(layers.Convolution2D(64, (3, 3), activation='relu', padding="SAME", input_shape=(224,224, 3)))
@@ -97,3 +101,81 @@ def triplet_loss(x, alpha = 0.2):
     basic_loss = pos_dist-neg_dist+alpha
     loss = backend.mean(backend.maximum(basic_loss,0.0))
     return loss
+
+def train_network():
+    # device_name = tf.test.gpu_device_name()
+    # if device_name != '/device:GPU:0':
+    #     raise SystemError('GPU device not found')
+    # print('Found GPU at: {}'.format(device_name))
+    # for gpu in tf.config.list_physical_devices('GPU'):
+    #     tf.config.experimental.set_memory_growth(gpu, True)
+    # preproccess_data()
+    # clear_data()
+    # sys.exit(-1)
+    # tf.debugging.set_log_device_placement(True)
+    epochs = 10
+
+    optimizer = Adam()
+    binary_cross_entropy = tf.keras.losses.BinaryCrossentropy()
+
+    base_dir = "."
+
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    logdir = os.path.join(base_dir, 'logs/func/%s' % stamp)
+    writer = tf.summary.create_file_writer(logdir)
+
+    scalar_logdir = os.path.join(base_dir, 'logs/scalars/%s' % stamp)
+    file_writer = tf.summary.create_file_writer(scalar_logdir + "/metrics")
+
+    checkpoint_path = os.path.join(base_dir, 'logs/model/siamese')
+
+    netw = build_network()
+
+    def train(X):
+        with tf.GradientTape() as tape:
+            y_pred = netw(X)
+            loss = triplet_loss(y_pred)
+        grad = tape.gradient(loss, netw.trainable_variables)
+        optimizer.apply_gradients(zip(grad, netw.trainable_variables))
+        return loss
+
+    data_generator = DataGenerator(dataset_path='./vgg_face_dataset/')
+    a, p, n = data_generator[0]
+    checkpoint = tf.train.Checkpoint(model=netw)
+    losses = []
+    accuracy = []
+
+    no_of_batches = data_generator.__len__()
+    print(no_of_batches)
+
+    # try:
+    #     with tf.device('/device:GPU:0'):
+    for i in range(1, epochs+1, 1):
+        loss = 0
+        with tqdm(total=no_of_batches) as pbar:
+            
+            description = "Epoch " + str(i) + "/" + str(epochs)
+            pbar.set_description_str(description)
+            
+            for j in range(no_of_batches):
+                data = data_generator[j]
+                temp = train(data)
+                loss += temp
+                
+                pbar.update()
+                print_statement = "Loss :" + str(temp.numpy())
+                pbar.set_postfix_str(print_statement)
+            
+            loss /= no_of_batches
+            losses.append(loss.numpy())
+            with file_writer.as_default():
+                tf.summary.scalar('Loss', data=loss.numpy(), step=i)
+                
+            print_statement = "Loss :" + str(loss.numpy())
+            
+            pbar.set_postfix_str(print_statement)
+    # except RuntimeError as e:
+    #     print(e)
+
+    checkpoint.save(checkpoint_path)
+    print("Checkpoint Saved")
