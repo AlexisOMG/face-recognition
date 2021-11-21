@@ -14,6 +14,8 @@ from network.network import triplet_loss
 from network.datagen import DataGenerator
 from tqdm import tqdm
 import dlib
+from tensorflow.keras.optimizers import Adam
+import shutil
 
 
 def v1():
@@ -75,7 +77,6 @@ def preproccess_data():
             faces = face_detector(gray, 0)
             if len(faces) == 1:
                 for face in faces:
-                    # face_bounding_box = face_utils.rect_to_bb(face)
                     t, r, b, l = max(0, face.top()), min(gray.shape[1], face.right()), min(gray.shape[0], face.bottom()), max(0, face.left())
                     if t >= 0 and r >= 0 and b >= 0 and l >= 0:
                         frame = img[t:b, l:r]
@@ -86,11 +87,26 @@ def preproccess_data():
         for item in list_of_images:
             f.write("%s\n" % item)
 
+def clear_data():
+    list_of_images = []
+    dataset_path = './vgg_face_dataset/images'
+    for dirname in os.listdir(dataset_path):
+        if len(os.listdir(dataset_path+'/'+dirname)) < 3:
+            print(f'DELETING {dirname}')
+            shutil.rmtree(dataset_path+'/'+dirname)
+        else:
+            for name in os.listdir(dataset_path+'/'+dirname):
+                list_of_images.append(dirname+'/'+name)
+    with open('./vgg_face_dataset/list.txt', 'w') as f:
+        for item in list_of_images:
+            f.write("%s\n" % item)
+
 def main():
-    preproccess_data()
+    # preproccess_data()
+    clear_data()
     epochs = 10
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.00006)
+    optimizer = Adam()
     binary_cross_entropy = tf.keras.losses.BinaryCrossentropy()
 
     base_dir = "."

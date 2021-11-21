@@ -62,7 +62,7 @@ class DataGenerator(tf.keras.utils.Sequence):
             while positive_index == anchor_index:
                 positive_index = random.randint(0, len(self.dataset[person])-1)
             p = self.get_image(person, positive_index)
-            
+
             negative_person_index = random.randint(0, self.no_of_people - 1)
             negative_person = list(self.dataset.keys())[negative_person_index]
             while negative_person == person:
@@ -86,6 +86,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         with open(os.path.join(dataset_path, 'list.txt'), 'r') as f:
             dataset = {}
             image_list = f.read().split()
+            # image_list = image_list[:min(100, len(image_list))]
             for image in image_list:
                 folder_name, file_name = image.split('/')
                 if folder_name in dataset.keys():
