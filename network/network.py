@@ -32,7 +32,7 @@ def build_network() -> Network:
     # vgg_model = vgg16.VGG16()
     # vgg = Model(inputs=vgg_model.input, outputs=vgg_model.get_layer("fc2").output)
     # vgg.save('logs/model/siamese-1', save_format='tf')
-    # vgg.save_weights('vgg_face_weights.tf', save_format='tf')
+    # vgg.save_weights('vgg_face_weights.h5')
     vgg = load_model('logs/model/siamese-1')
     t = Sequential(vgg.layers)
     # vgg = Sequential()
@@ -77,6 +77,7 @@ def build_network() -> Network:
         layer.trainable = False
 
     network = Network(vgg=t)
+    print(t.summary())
 
     
     # checkpoint_path = os.path.join(base_dir, 'logs/model/siamese-1')
