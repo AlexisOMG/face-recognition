@@ -8,6 +8,8 @@ from datetime import datetime
 import os
 from network.network import triplet_loss
 from network.datagen import DataGenerator
+import numpy as np
+from network.datagen import preprocess_input
 
 
 def v1():
@@ -55,8 +57,62 @@ def v1():
 def main():
     netw = build_network()
     checkpoint = tf.train.Checkpoint(netw)
-    checkpoint.restore('./logs/model/siamese-1')
-    
+    checkpoint.restore('./logs/model/siamese-1').expect_partial()
+    md = FaceData()
+    # encds = md.get_face_encodings(md.read_dataset(), netw=netw)
+    # print(encds)
+    # md.save_face_encodings_to_cache(encds)
+    encds = md.load_face_encodings_from_cache()
+    md.set_faces_encodings(encds)
+    video = cv2.VideoCapture(0)
+
+    while True:
+        ret, image = video.read()
+        if ret:
+            locations = fr.face_locations(image)
+            for (t, r, b, l) in locations:
+                frame = image[t:b, l:r]
+                frame = cv2.resize(frame, (224, 224))
+                frame = np.asarray(frame, dtype=np.float64)
+                frame = np.expand_dims(frame, axis=0)
+                frame = preprocess_input(frame)
+                face = netw.get_features(frame)[0]
+                face = np.asarray(face, dtype=np.float64)
+                # face = np.expand_dims(face, axis=0)
+                # print(encds['alexis'])
+                # print(face)
+                # print(tf.math.l2_normalize(face, axis=-1))
+                # dist = tf.norm(encds['alexis']-face, axis=1)
+                # # print(dist)
+                # name = 'whoisit'
+                # loc = tf.argmin(dist)
+                # # print(dist[loc])
+                # if dist[loc] < 0.8:
+                #     name = 'alexis'
+                # face = np.expand_dims(face, axis=0)
+                # print(face.dtype)
+                name = md.recognize_face(face=face)
+                cv2.rectangle(image, (l, t), (r, b), (0, 255, 0), 4)
+                cv2.rectangle(image, (l, b), (r, b), (0, 255, 0), cv2.FILLED)
+                cv2.putText(
+                    image,
+                    name,
+                    (l + 10, b + 15),
+                    cv2.FONT_HERSHEY_TRIPLEX,
+                    1,
+                    (255, 255, 255),
+                    4
+                )
+
+            cv2.imshow("fr", image)
+            k = cv2.waitKey(10)
+            if k == ord("q"):
+                    print("Q pressed, closing the app")
+                    break
+        else:
+            print("[Error] Can't get the frame...")
+            break
+
 
 if __name__ == '__main__':
     main()

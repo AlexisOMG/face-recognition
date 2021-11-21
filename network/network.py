@@ -81,7 +81,7 @@ def build_network() -> Network:
         layer.trainable = False
 
     network = Network(vgg=t)
-    print(t.summary())
+    # print(t.summary())
 
     
     # checkpoint_path = os.path.join(base_dir, 'logs/model/siamese-1')

@@ -46,14 +46,18 @@ def save_faces(faces: List[ndarray]) -> None:
 
 def euclidean_dist(first_face: ndarray, second_face: ndarray) -> float:
     res = 0.0
+
     f, s = first_face.tolist(), second_face.tolist()
+ 
     for i in range(len(f)):
         res += (f[i] - s[i])**2
     return numpy.sqrt(res)
 
 def compare_faces(known_face_encds: List[ndarray], unknown_face_encd: ndarray) -> bool:
     for face_encd in known_face_encds:
-        if euclidean_dist(face_encd, unknown_face_encd) <= 0.6:
+        dist = euclidean_dist(face_encd, unknown_face_encd)
+        print(dist)
+        if dist <= 0.8:
             return True
 
     return False
