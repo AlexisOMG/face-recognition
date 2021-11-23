@@ -32,6 +32,12 @@ class Network(Model):
     def get_features(self, inputs):
         return tf.math.l2_normalize(self.vgg(inputs), axis=-1)
 
+def save_weights(model: Model):
+    model.save_weights('vgg_face_weights.h5')
+
+def save_model(model: Model):
+    model.save('logs/premodel/siamese-1')
+
 def build_network() -> Network:
     # vgg_model = vgg16.VGG16()
     # vgg = Model(inputs=vgg_model.input, outputs=vgg_model.get_layer("fc2").output)

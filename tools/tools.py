@@ -115,7 +115,7 @@ def preproccess_data():
                 for face in faces:
                     t, r, b, l = max(0, face.top()), min(gray.shape[1], face.right()), min(gray.shape[0], face.bottom()), max(0, face.left())
                     if t >= 0 and r >= 0 and b >= 0 and l >= 0:
-                        frame = gray[t:b, l:r]
+                        frame = img[t:b, l:r]
                         save_image = os.path.join(os.path.join(dataset_path, dirname), image)
                         cv2.imwrite(save_image, frame)
                         list_of_images.append(dirname + '/' + image)
@@ -127,7 +127,7 @@ def clear_data():
     list_of_images = []
     dataset_path = './vgg_face_dataset/images'
     for dirname in os.listdir(dataset_path):
-        if len(os.listdir(dataset_path+'/'+dirname)) < 3:
+        if len(os.listdir(dataset_path+'/'+dirname)) < 4:
             print(f'DELETING {dirname}')
             shutil.rmtree(dataset_path+'/'+dirname)
         else:
