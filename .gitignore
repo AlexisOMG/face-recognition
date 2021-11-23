@@ -1,6 +1,5 @@
 env/
 __pycache__
-dataset/
 video/
 vgg_face_weights.h5
 logs/
