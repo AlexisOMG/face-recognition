@@ -53,6 +53,8 @@ class FaceData:
         people_image_paths = {}
 
         for name in os.listdir(self.path_to_dataset):
+            if not os.path.isdir(self.path_to_dataset + '/' + name):
+                continue
             if len(people_image_paths) == 0 or name not in people_image_paths:
                 people_image_paths[name] = []
             
@@ -84,6 +86,7 @@ class FaceData:
             images = preprocess_input(images)
             images = tf.convert_to_tensor(images)
             features = netw.get_features(images)
+            features = tf.math.l2_normalize(features, axis=-1)
             encds = []
             for feature in features:
                 encds.append(np.asarray(feature, dtype=np.float64))
