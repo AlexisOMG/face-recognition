@@ -11,6 +11,10 @@ from network.network import triplet_loss
 from network.datagen import DataGenerator
 import numpy as np
 from network.datagen import preprocess_input
+from tensorflow.keras.applications import vgg16
+from tensorflow.keras import Model
+from scipy import spatial
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 def v1():
@@ -57,7 +61,9 @@ def v1():
 
 def main():
     with tf.device('CPU'):
-        netw = build_network()
+        vgg_model = vgg16.VGG16(weights='imagenet')
+        netw = Model(inputs=vgg_model.input, outputs=vgg_model.get_layer("fc2").output)
+        # netw = build_network()
         checkpoint = tf.train.Checkpoint(netw)
         checkpoint.restore('./logs/model/siamese-1').expect_partial()
         md = FaceData()
@@ -67,7 +73,8 @@ def main():
         md.save_face_encodings_to_cache(encds)
         encds = md.load_face_encodings_from_cache()
         md.set_faces_encodings(encds)
-        video = cv2.VideoCapture('videoplayback.mp4')
+        # video = cv2.VideoCapture('videoplayback.mp4')
+        video = cv2.VideoCapture(0)
 
         while True:
             ret, image = video.read()
@@ -79,38 +86,27 @@ def main():
                     frame = np.asarray(frame, dtype=np.float64)
                     frame = np.expand_dims(frame, axis=0)
                     frame = preprocess_input(frame)
-                    faces = netw.get_features(frame)
-                    faces = tf.math.l2_normalize(faces, axis=-1)
-                    # print('Faces\n', faces)
+                    faces = netw.predict(frame)
                     name = 'Unknown'
                     min_dist = 1.0
                     min_name = ''
                     for face in faces:
-                        # print(face)
+                        face = face / np.linalg.norm(face)
+
                         if name != 'Unknown':
                             break
                         for known_person in encds:
-                            # if name != 'Unknown':
-                            #     break
-                            # for known_face in encds[known_person]:
-                            known_face = tf.reduce_mean(encds[known_person], axis=0).numpy()
-                            dist = tl.euclidean_dist(known_face, face.numpy())
-                                # print('ENCDS\n', encds[known_person])
-                                # print('KNOWN\n', known_face)
-                                # sys.exit(0)
-                            # dist = tf.norm(known_face-face, ord='euclidean')
-                            # print(dist, 'with', known_person)
+
+                            known_face = encds[known_person].mean(axis=0)
+                            dist = tl.euclidean_dist(known_face, face)
+
                             if dist <= min_dist:
                                 min_dist = dist
                                 min_name = known_person
 
-                    if min_dist < 0.7:
+                    if min_dist < 0.75:
                         name = min_name
-
-                    # face = np.asarray(face[0], dtype=np.float64)
-                    # # face = np.expand_dims(face, axis=0)
-                    # # print(face.dtype)
-                    # name = md.recognize_face(face=face)
+                    
                     cv2.rectangle(image, (l, t), (r, b), (0, 255, 0), 4)
                     cv2.rectangle(image, (l, b), (r, b), (0, 255, 0), cv2.FILLED)
                     cv2.putText(

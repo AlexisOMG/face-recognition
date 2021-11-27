@@ -81,26 +81,15 @@ class FaceData:
                         frame = img[t:b, l:r]
                         frame = cv2.resize(frame, (224, 224))
                         frame = np.asarray(frame, dtype=np.float64)
-                        images.append(frame)
-            images = np.asarray(images)
-            images = preprocess_input(images)
-            images = tf.convert_to_tensor(images)
-            features = netw.get_features(images)
-            features = tf.math.l2_normalize(features, axis=-1)
-            encds = []
-            for feature in features:
-                encds.append(np.asarray(feature, dtype=np.float64))
-            # features = tf.reduce_mean(features, axis=0)
-            # features = np.asarray(features, dtype=np.float64)
-            # res[name] = features
-            # print(features)
+                        frame = np.expand_dims(frame, axis=0)
+                        frame = preprocess_input(frame)
+                        features = netw.predict(frame)
+                        # print(features)
+                        for feature in features:
+                            feature = feature / np.linalg.norm(feature)
+                            person_face_encodings.append(feature)
 
-            # person_images = tl.load_images(people[name])
-            
-            
-            # for face in tl.extract_faces(person_images):
-            #     person_face_encodings.append(tl.get_face_encoding(face))
-            res[name] = encds
+            res[name] = np.asarray(person_face_encodings, dtype=np.float64)
 
         return res
 
