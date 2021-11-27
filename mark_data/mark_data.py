@@ -64,43 +64,20 @@ class FaceData:
 
         return people_image_paths
 
-    def get_face_encodings(self, people: PeopleImagePaths, netw: Network) -> FacesEncodings:
+    def get_face_encodings(self, people: PeopleImagePaths) -> FacesEncodings:
         res = {}
-        face_detector = dlib.get_frontal_face_detector()
 
         for name in people:
-            person_face_encodings = []
-            images = []
-            for image_path in people[name]:
-                img = cv2.imread(image_path)
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                faces = face_detector(gray, 0)
+            images = tl.load_images(people[name])
+            person_encds = []
+            for image in images:
+                faces = tl.extract_faces(image)
                 for face in faces:
-                    t, r, b, l = max(0, face.top()), min(gray.shape[1], face.right()), min(gray.shape[0], face.bottom()), max(0, face.left())
-                    if t >= 0 and r >= 0 and b >= 0 and l >= 0:
-                        frame = img[t:b, l:r]
-                        frame = cv2.resize(frame, (224, 224))
-                        frame = np.asarray(frame, dtype=np.float64)
-                        images.append(frame)
-            images = np.asarray(images)
-            images = preprocess_input(images)
-            images = tf.convert_to_tensor(images)
-            features = netw.get_features(images)
-            features = tf.math.l2_normalize(features, axis=-1)
-            encds = []
-            for feature in features:
-                encds.append(np.asarray(feature, dtype=np.float64))
-            # features = tf.reduce_mean(features, axis=0)
-            # features = np.asarray(features, dtype=np.float64)
-            # res[name] = features
-            # print(features)
+                    face_encds = tl.get_face_encoding(face)
+                    for encd in face_encds:
+                        person_encds.append(encd)
 
-            # person_images = tl.load_images(people[name])
-            
-            
-            # for face in tl.extract_faces(person_images):
-            #     person_face_encodings.append(tl.get_face_encoding(face))
-            res[name] = encds
+            res[name] = person_encds
 
         return res
 

@@ -13,11 +13,11 @@ import numpy
 def load_images(paths: List[str]) -> List[ndarray]:
     return [fr.load_image_file(path) for path in paths]
 
-def get_face_locations(images: List[ndarray]) -> List[List[Tuple[int, Any, Any, int]]]:
-    return [fr.face_locations(image) for image in images]
+def get_face_locations(image: ndarray) -> List[Tuple[int, Any, Any, int]]:
+    return fr.face_locations(image)
 
-def get_face_encoding(face: ndarray, known_face_locations=None) -> ndarray:
-    return fr.face_encodings(face_image=face, known_face_locations=known_face_locations)[0]
+def get_face_encoding(face: ndarray) -> ndarray:
+    return fr.face_encodings(face_image=face)
 
 def highlight_faces(images: List[ndarray]) -> None:
     face_locations = get_face_locations(images)
@@ -29,12 +29,11 @@ def highlight_faces(images: List[ndarray]) -> None:
         del draw
         img.save(f'imgs/highlighted_faces_{i}.jpg')
 
-def extract_faces(images: List[ndarray]) -> List[ndarray]:
+def extract_faces(image: ndarray) -> List[ndarray]:
     res = []
-    face_locations = get_face_locations(images)
-    for i in range(len(face_locations)):
-        for (t, r, b, l) in face_locations[i]:
-            res.append(images[i][t:b, l:r])
+    face_locations = get_face_locations(image=image)
+    for (t, r, b, l) in face_locations:
+        res.append(image[t:b, l:r])
     return res
 
 def save_faces(faces: List[ndarray]) -> None:
@@ -57,7 +56,7 @@ def compare_faces(known_face_encds: List[ndarray], unknown_face_encd: ndarray) -
     for face_encd in known_face_encds:
         dist = euclidean_dist(face_encd, unknown_face_encd)
         print(dist)
-        if dist <= 0.8:
+        if dist <= 0.5:
             return True
 
     return False

@@ -14,11 +14,8 @@ from network.datagen import preprocess_input
 
 
 def v1():
-    # tl.build_dataset_from_video('video/alexis.mp4', 'alexis')
-    # dt = md.load_dataset()
-    # encds = md.get_face_encds(dt)
-    # md.save_face_encds(encds)
     md = FaceData()
+    md.save_face_encodings_to_cache(md.get_face_encodings(md.read_dataset()))
     encds = md.load_face_encodings_from_cache()
     md.set_faces_encodings(encds)
     video = cv2.VideoCapture(0)
@@ -56,81 +53,7 @@ def v1():
             break
 
 def main():
-    with tf.device('CPU'):
-        netw = build_network()
-        checkpoint = tf.train.Checkpoint(netw)
-        checkpoint.restore('./logs/model/siamese-1').expect_partial()
-        md = FaceData()
-        encds = md.get_face_encodings(md.read_dataset(), netw=netw)
-        print(encds)
-        # sys.exit(0)
-        md.save_face_encodings_to_cache(encds)
-        encds = md.load_face_encodings_from_cache()
-        md.set_faces_encodings(encds)
-        video = cv2.VideoCapture('videoplayback.mp4')
-
-        while True:
-            ret, image = video.read()
-            if ret:
-                locations = tl.get_face_locations([image])
-                for (t, r, b, l) in locations[0]:
-                    frame = image[t:b, l:r]
-                    frame = cv2.resize(frame, (224, 224))
-                    frame = np.asarray(frame, dtype=np.float64)
-                    frame = np.expand_dims(frame, axis=0)
-                    frame = preprocess_input(frame)
-                    faces = netw.get_features(frame)
-                    faces = tf.math.l2_normalize(faces, axis=-1)
-                    # print('Faces\n', faces)
-                    name = 'Unknown'
-                    min_dist = 1.0
-                    min_name = ''
-                    for face in faces:
-                        # print(face)
-                        if name != 'Unknown':
-                            break
-                        for known_person in encds:
-                            # if name != 'Unknown':
-                            #     break
-                            # for known_face in encds[known_person]:
-                            known_face = tf.reduce_mean(encds[known_person], axis=0).numpy()
-                            dist = tl.euclidean_dist(known_face, face.numpy())
-                                # print('ENCDS\n', encds[known_person])
-                                # print('KNOWN\n', known_face)
-                                # sys.exit(0)
-                            # dist = tf.norm(known_face-face, ord='euclidean')
-                            # print(dist, 'with', known_person)
-                            if dist <= min_dist:
-                                min_dist = dist
-                                min_name = known_person
-
-                    if min_dist < 0.7:
-                        name = min_name
-
-                    # face = np.asarray(face[0], dtype=np.float64)
-                    # # face = np.expand_dims(face, axis=0)
-                    # # print(face.dtype)
-                    # name = md.recognize_face(face=face)
-                    cv2.rectangle(image, (l, t), (r, b), (0, 255, 0), 4)
-                    cv2.rectangle(image, (l, b), (r, b), (0, 255, 0), cv2.FILLED)
-                    cv2.putText(
-                        image,
-                        name,
-                        (l + 10, b + 15),
-                        cv2.FONT_HERSHEY_TRIPLEX,
-                        1,
-                        (255, 255, 255),
-                        4
-                    )
-
-                cv2.imshow("fr", image)
-                k = cv2.waitKey(20)
-                if k == ord("q"):
-                        print("Q pressed, closing the app")
-                        break
-            else:
-                print("[Error] Can't get the frame...")
-                break
+    v1()
 
 
 if __name__ == '__main__':
