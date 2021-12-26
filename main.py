@@ -1,4 +1,3 @@
-import face_recognition as fr
 import tools.tools as tl
 from mark_data.mark_data import FaceData
 import cv2
@@ -7,7 +6,7 @@ import PySimpleGUI as sg
 from shutil import copy
 
 
-def v1(need_update_cache=False):
+def recognize_with_fr(need_update_cache=False):
     md = FaceData()
     if need_update_cache:
         md.save_face_encodings_to_cache(md.get_face_encodings(md.read_dataset()))
@@ -54,7 +53,7 @@ def v1(need_update_cache=False):
             print("[Error] Can't get the frame...")
             break
 
-def main():
+def ui() -> bool:
     file_list_column = [
         [
             sg.Text('Имя человека'),
@@ -128,8 +127,12 @@ def main():
             window['-FILE LIST-'].update([])
     
     window.close()
+    return need_update_cache
 
-    v1(need_update_cache)
+def main():
+    need_update_cache = ui()
+
+    recognize_with_fr(need_update_cache)
 
 
 if __name__ == '__main__':
