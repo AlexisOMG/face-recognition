@@ -90,7 +90,6 @@ def main():
         if ev == '-FOLDER-':
             folder = val['-FOLDER-']
             try:
-                # Get list of files in folder
                 file_list = os.listdir(folder)
             except:
                 file_list = []
