@@ -7,9 +7,10 @@ import PySimpleGUI as sg
 from shutil import copy
 
 
-def v1():
+def v1(need_update_cache=False):
     md = FaceData()
-    md.save_face_encodings_to_cache(md.get_face_encodings(md.read_dataset()))
+    if need_update_cache:
+        md.save_face_encodings_to_cache(md.get_face_encodings(md.read_dataset()))
     encds = md.load_face_encodings_from_cache()
     md.set_faces_encodings(encds)
     video = cv2.VideoCapture(0)
@@ -21,7 +22,7 @@ def v1():
 
             small_image = cv2.resize(image, None, fx=0.5, fy=0.5)
             rgb_image = small_image[:, :, ::-1]
-            # print(rgb_image)
+            
             locations = tl.get_face_locations(image=rgb_image)
             encodings = tl.get_face_encoding(face=rgb_image, locations=locations)
 
@@ -43,7 +44,7 @@ def v1():
                     (255, 255, 255),
                     4
                 )
-            cv2.imshow("fr", image)
+            cv2.imshow('recognition', image)
             k = cv2.waitKey(20)
             if k == ord("q"):
                     print("Q pressed, closing the app")
@@ -56,37 +57,38 @@ def v1():
 def main():
     file_list_column = [
         [
-            sg.Text('Person Name'),
+            sg.Text('Имя человека'),
             sg.In(size=(25,1), enable_events=True, key='-PERSON NAME-'),
         ],
         [
-            sg.Text("Image Folder"),
-            sg.In(size=(24, 1), enable_events=True, key="-FOLDER-"),
+            sg.Text('Директория с фото'),
+            sg.In(size=(24, 1), enable_events=True, key='-FOLDER-'),
             sg.FolderBrowse(),
         ],
         [
             sg.Listbox(
-                values=[], enable_events=True, size=(40, 20), key="-FILE LIST-"
+                values=[], enable_events=True, size=(40, 20), key='-FILE LIST-'
             )
         ],
         [
-            sg.Button(button_text='Add person', enable_events=True, key='-ADD PERSON-'),
-            sg.Button(button_text='Recognize', enable_events=True, key='-RECOGNIZE-'),
+            sg.Button(button_text='Добавить человека', enable_events=True, key='-ADD PERSON-'),
+            sg.Button(button_text='Начать распознавание', enable_events=True, key='-RECOGNIZE-'),
         ],
     ]
     
     person_name = ''
     files = []
+    need_update_cache = False
     
-    window = sg.Window(title="Hello World", layout=file_list_column, resizable=True)
+    window = sg.Window(title='Распознавание', layout=file_list_column, resizable=True)
     while True:
         ev, val = window.read()
     
         if ev == sg.WIN_CLOSED or ev == '-RECOGNIZE-':
             break
     
-        if ev == "-FOLDER-":
-            folder = val["-FOLDER-"]
+        if ev == '-FOLDER-':
+            folder = val['-FOLDER-']
             try:
                 # Get list of files in folder
                 file_list = os.listdir(folder)
@@ -100,9 +102,9 @@ def main():
                 and f.lower().endswith((".png", ".gif", '.jpg', '.jpeg'))
             ]
             if len(fnames) < 10:
-                window["-FILE LIST-"].update(['Need at least 10 photos of person'])
+                window['-FILE LIST-'].update(['Need at least 10 photos of person'])
             else:
-                window["-FILE LIST-"].update(fnames)
+                window['-FILE LIST-'].update(fnames)
                 base_dir = folder if folder[-1] == '/' else folder + '/'
                 files = [base_dir + f for f in fnames]
         elif ev == '-PERSON NAME-':
@@ -119,15 +121,16 @@ def main():
 
             for file in files:
                 copy(file, person_dir)
+            need_update_cache = True
             person_name = ''
             files = []
             window['-PERSON NAME-'].update('')
             window['-FOLDER-'].update('')
-            window["-FILE LIST-"].update([])
+            window['-FILE LIST-'].update([])
     
     window.close()
 
-    v1()
+    v1(need_update_cache)
 
 
 if __name__ == '__main__':
