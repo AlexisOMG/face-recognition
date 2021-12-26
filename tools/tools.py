@@ -16,8 +16,8 @@ def load_images(paths: List[str]) -> List[ndarray]:
 def get_face_locations(image: ndarray) -> List[Tuple[int, Any, Any, int]]:
     return fr.face_locations(image)
 
-def get_face_encoding(face: ndarray) -> ndarray:
-    return fr.face_encodings(face_image=face)
+def get_face_encoding(face: ndarray, locations: List[Tuple[int, Any, Any, int]] = None) -> List[ndarray]:
+    return fr.face_encodings(face_image=face, known_face_locations=locations)
 
 def highlight_faces(images: List[ndarray]) -> None:
     face_locations = get_face_locations(images)
