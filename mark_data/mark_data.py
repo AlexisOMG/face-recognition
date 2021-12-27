@@ -2,9 +2,15 @@ import os
 import sys
 import pickle
 from typing import Dict, List
+import cv2
+import dlib
+
+import numpy as np
+import tensorflow as tf
+from network.datagen import preprocess_input
 
 from numpy import ndarray
-
+from network.network import Network
 import tools.tools as tl
 
 DEFAULT_PATH_TO_DATASET = 'dataset/'
@@ -47,6 +53,8 @@ class FaceData:
         people_image_paths = {}
 
         for name in os.listdir(self.path_to_dataset):
+            if not os.path.isdir(self.path_to_dataset + '/' + name):
+                continue
             if len(people_image_paths) == 0 or name not in people_image_paths:
                 people_image_paths[name] = []
             
@@ -60,11 +68,16 @@ class FaceData:
         res = {}
 
         for name in people:
-            person_images = tl.load_images(people[name])
-            person_face_encodings = []
-            for face in tl.extract_faces(person_images):
-                person_face_encodings.append(tl.get_face_encoding(face))
-            res[name] = person_face_encodings
+            images = tl.load_images(people[name])
+            person_encds = []
+            for image in images:
+                faces = tl.extract_faces(image)
+                for face in faces:
+                    face_encds = tl.get_face_encoding(face)
+                    for encd in face_encds:
+                        person_encds.append(encd)
+
+            res[name] = person_encds
 
         return res
 

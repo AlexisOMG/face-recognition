@@ -1,0 +1,113 @@
+import numpy as np
+import tensorflow as tf
+import tensorflow.keras.backend as K
+import random
+import cv2
+import os
+
+def preprocess_input(x, data_format=None, version=1):
+    x_temp = np.copy(x)
+    if data_format is None:
+        data_format = K.image_data_format()
+    assert data_format in {'channels_last', 'channels_first'}
+
+    if version == 1:
+        if data_format == 'channels_first':
+            x_temp = x_temp[:, ::-1, ...]
+            x_temp[:, 0, :, :] -= 93.5940
+            x_temp[:, 1, :, :] -= 104.7624
+            x_temp[:, 2, :, :] -= 129.1863
+        else:
+            x_temp = x_temp[..., ::-1]
+            x_temp[..., 0] -= 93.5940
+            x_temp[..., 1] -= 104.7624
+            x_temp[..., 2] -= 129.1863
+
+    elif version == 2:
+        if data_format == 'channels_first':
+            x_temp = x_temp[:, ::-1, ...]
+            x_temp[:, 0, :, :] -= 91.4953
+            x_temp[:, 1, :, :] -= 103.8827
+            x_temp[:, 2, :, :] -= 131.0912
+        else:
+            x_temp = x_temp[..., ::-1]
+            x_temp[..., 0] -= 91.4953
+            x_temp[..., 1] -= 103.8827
+            x_temp[..., 2] -= 131.0912
+    else:
+        raise NotImplementedError
+
+    return x_temp
+
+class DataGenerator(tf.keras.utils.Sequence):
+    def __init__(self, dataset_path, batch_size=32, shuffle=True):
+        self.dataset = self.curate_dataset(dataset_path)
+        self.dataset_path = dataset_path
+        self.shuffle = shuffle
+        self.batch_size =batch_size
+        self.no_of_people = len(list(self.dataset.keys()))
+        self.on_epoch_end()
+        
+    def __getitem__(self, index):
+        people = list(self.dataset.keys())[index * self.batch_size: (index + 1) * self.batch_size]
+        P = []
+        A = []
+        N = []
+        
+        for person in people:
+            anchor_index = random.randint(0, len(self.dataset[person])-1)
+            a = self.get_image(person, anchor_index)
+            
+            positive_index = random.randint(0, len(self.dataset[person])-1)
+            while positive_index == anchor_index:
+                positive_index = random.randint(0, len(self.dataset[person])-1)
+            p = self.get_image(person, positive_index)
+
+            negative_person_index = random.randint(0, self.no_of_people - 1)
+            negative_person = list(self.dataset.keys())[negative_person_index]
+            while negative_person == person:
+                negative_person_index = random.randint(0, self.no_of_people - 1)
+                negative_person = list(self.dataset.keys())[negative_person_index]
+            
+            negative_index = random.randint(0, len(self.dataset[negative_person])-1)
+            n = self.get_image(negative_person, negative_index)
+            P.append(p)
+            A.append(a)
+            N.append(n)
+        A = np.asarray(A)
+        N = np.asarray(N)
+        P = np.asarray(P)
+        return [A, P, N]
+        
+    def __len__(self):
+        return self.no_of_people // self.batch_size
+        
+    def curate_dataset(self, dataset_path):
+        with open(os.path.join(dataset_path, 'list.txt'), 'r') as f:
+            dataset = {}
+            image_list = f.read().split()
+            # image_list = image_list[:min(100, len(image_list))]
+            for image in image_list:
+                folder_name, file_name = image.split('/')
+                if folder_name in dataset.keys():
+                    dataset[folder_name].append(file_name)
+                else:
+                    dataset[folder_name] = [file_name]
+        return dataset
+    
+    def on_epoch_end(self):
+        if self.shuffle:
+            keys = list(self.dataset.keys())
+            random.shuffle(keys)
+            dataset_ =  {}
+            for key in keys:
+                dataset_[key] = self.dataset[key]
+            self.dataset = dataset_
+            
+    def get_image(self, person, index):
+        # print(os.path.join(self.dataset_path, os.path.join('images/' + person, self.dataset[person][index])))
+        img = cv2.imread(os.path.join(self.dataset_path, os.path.join('images/' + person, self.dataset[person][index])))
+        img = cv2.resize(img, (224, 224))
+        img = np.asarray(img, dtype=np.float64)
+        img = preprocess_input(img)
+        return img

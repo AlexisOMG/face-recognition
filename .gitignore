@@ -1,4 +1,8 @@
 env/
 __pycache__
-dataset/
 video/
+vgg_face_weights.h5
+logs/
+.DS_Store
+vgg_face_dataset/
+videoplayback.mp4
