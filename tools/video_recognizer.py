@@ -1,5 +1,5 @@
 import tools.tools as tl
-from mark_data.mark_data import FaceData
+from face_data.face_data import FaceData
 import cv2
 
 def recognize_with_fr(need_update_cache=False, path_to_video = None):
