@@ -73,10 +73,10 @@ class FaceData:
             images = []
             for image_path in people[name]:
                 img = cv2.imread(image_path)
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                faces = face_detector(gray, 0)
+                # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                faces = face_detector(img, 0)
                 for face in faces:
-                    t, r, b, l = max(0, face.top()), min(gray.shape[1], face.right()), min(gray.shape[0], face.bottom()), max(0, face.left())
+                    t, r, b, l = max(0, face.top()), min(img.shape[1], face.right()), min(img.shape[0], face.bottom()), max(0, face.left())
                     if t >= 0 and r >= 0 and b >= 0 and l >= 0:
                         frame = img[t:b, l:r]
                         frame = cv2.resize(frame, (224, 224))
