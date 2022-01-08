@@ -12,7 +12,7 @@ def ui() -> bool:
         [
             sg.Text('Папка с фото'),
             sg.In(size=(24, 1), enable_events=True, key='-FOLDER-'),
-            sg.FolderBrowse(),
+            sg.FolderBrowse(button_text='Выбрать'),
         ],
         [
             sg.Listbox(
