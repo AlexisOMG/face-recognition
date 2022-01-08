@@ -33,11 +33,11 @@ def recognize_with_fr(need_update_cache=False, path_to_video = None):
                 b *= 2
                 l *= 2
                 cv2.rectangle(image, (l, t), (r, b), (0, 255, 0), 4)
-                cv2.rectangle(image, (l, b), (r, b), (0, 255, 0), cv2.FILLED)
+                cv2.rectangle(image, (l, b), (r, b+20), (0, 255, 0), cv2.FILLED)
                 cv2.putText(
                     image,
                     name,
-                    (l + 10, b + 15),
+                    (l + 15, b + 15),
                     cv2.FONT_HERSHEY_TRIPLEX,
                     1,
                     (255, 255, 255),
