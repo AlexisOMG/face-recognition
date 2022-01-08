@@ -6,7 +6,9 @@ import time
 def recognize_with_fr(need_update_cache=False, path_to_video = None):
     md = FaceData()
     if need_update_cache:
+        start = time.time_ns()
         md.save_face_encodings_to_cache(md.get_face_encodings(md.read_dataset()))
+        print('Process encds: ', time.time_ns() - start)
     encds = md.load_face_encodings_from_cache()
     md.set_faces_encodings(encds)
     video = None
