@@ -6,3 +6,4 @@ logs/
 .DS_Store
 vgg_face_dataset/
 videoplayback.mp4
+log*

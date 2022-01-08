@@ -1,6 +1,7 @@
 import tools.tools as tl
 from face_data.face_data import FaceData
 import cv2
+import time
 
 def recognize_with_fr(need_update_cache=False, path_to_video = None):
     md = FaceData()
@@ -14,6 +15,8 @@ def recognize_with_fr(need_update_cache=False, path_to_video = None):
     else:
         video = cv2.VideoCapture(path_to_video)
 
+    id = 0
+
     while True:
         ret, image = video.read()
 
@@ -22,6 +25,7 @@ def recognize_with_fr(need_update_cache=False, path_to_video = None):
             small_image = cv2.resize(image, None, fx=0.5, fy=0.5)
             rgb_image = small_image[:, :, ::-1]
             
+            start = time.time_ns()
             locations = tl.get_face_locations(image=rgb_image)
             encodings = tl.get_face_encoding(face=rgb_image, locations=locations)
 
@@ -43,6 +47,8 @@ def recognize_with_fr(need_update_cache=False, path_to_video = None):
                     (255, 255, 255),
                     4
                 )
+            print(id, time.time_ns() - start)
+            id += 1
             cv2.imshow('recognition', image)
             k = cv2.waitKey(20)
             if k == ord("q"):
