@@ -15,6 +15,7 @@ from tensorflow.keras.applications import vgg16
 from tensorflow.keras import Model
 from scipy import spatial
 from sklearn.metrics.pairwise import cosine_similarity
+import time
 
 
 def v1():
@@ -74,8 +75,9 @@ def main():
         encds = md.load_face_encodings_from_cache()
         md.set_faces_encodings(encds)
         # video = cv2.VideoCapture('videoplayback.mp4')
-        video = cv2.VideoCapture(0)
+        video = cv2.VideoCapture('videoplayback.mp4')
 
+        id = 0
         while True:
             ret, image = video.read()
             if ret:
@@ -86,6 +88,7 @@ def main():
                     frame = np.asarray(frame, dtype=np.float64)
                     frame = np.expand_dims(frame, axis=0)
                     frame = preprocess_input(frame)
+                    start = time.time_ns()
                     faces = netw.predict(frame)
                     name = 'Unknown'
                     min_dist = 1.0
@@ -118,7 +121,8 @@ def main():
                         (255, 255, 255),
                         4
                     )
-
+                print(id, time.time_ns() - start)
+                id += 1
                 cv2.imshow("fr", image)
                 k = cv2.waitKey(20)
                 if k == ord("q"):

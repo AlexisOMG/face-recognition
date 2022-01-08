@@ -56,7 +56,6 @@ def euclidean_dist(first_face: ndarray, second_face: ndarray) -> float:
 def compare_faces(known_face_encds: List[ndarray], unknown_face_encd: ndarray) -> bool:
     for face_encd in known_face_encds:
         dist = euclidean_dist(face_encd, unknown_face_encd)
-        print(dist)
         if dist <= 0.8:
             return True
 
