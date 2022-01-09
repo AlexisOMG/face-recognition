@@ -47,7 +47,7 @@ def recognize_with_fr(need_update_cache=False, path_to_video = None):
                     cv2.FONT_HERSHEY_TRIPLEX,
                     1,
                     (255, 255, 255),
-                    4
+                    2
                 )
             print(id, time.time_ns() - start)
             id += 1
