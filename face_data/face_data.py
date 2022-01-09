@@ -2,15 +2,8 @@ import os
 import sys
 import pickle
 from typing import Dict, List
-import cv2
-import dlib
-
-import numpy as np
-import tensorflow as tf
-from network.datagen import preprocess_input
 
 from numpy import ndarray
-from network.network import Network
 import tools.tools as tl
 
 DEFAULT_PATH_TO_DATASET = 'dataset/'
